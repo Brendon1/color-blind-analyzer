@@ -21,6 +21,7 @@ def get_args():
                         required=True, metavar='', help='Classification of colorblindness to analyze')
     parser.add_argument('-i', '--intensity', type=float, default=1.0, choices=restrict_float_input,
                         metavar='', help='The intensity of the colorblindness classification')
+    # TODO: may want to make source and dest required
     parser.add_argument('-s', '--source', type=str, default=os.path.join(os.getcwd(), 'source'),
                         metavar='', help='Path of directory containing files to analyze')
     parser.add_argument('-d', '--destination', type=str, default=os.path.join(os.getcwd(), 'destination'),
@@ -28,52 +29,26 @@ def get_args():
     parser.add_argument('-f', '--file-type', type=str, default='.png', metavar='', help='File type to \
                         analyze')
     parser.add_argument('-sz', '--region-size', type=int, default=20, metavar='', help='The size of each \
-                        region to be analyzed. [Smaller-size]: greater resolution, susceptible to noise. \
-                        [Larger-size]: more efficient, loses granularity')
-    parser.add_argument('-t', '--threshold', type=int, metavar='', help='Threshold for if a region is \
+                        region to be analyzed.')
+    # TODO: adjust default value after an appropriate threshold is calculated
+    parser.add_argument('-t', '--threshold', type=int, default=10, metavar='', help='Threshold for if a region is \
                         problematic')
     return parser.parse_args()
 
-def main():
-    args = get_args()
-
-    # Absolute path of source directory
-    srcDir = os.path.join(os.getcwd(), 'source')
-    # List of all files and directories in source directory
-    dirList = os.listdir(srcDir)
-
-    # Print all file names in source directory
-    print("Files and directories in '", srcDir, "' :")
-    print(dirList)
-
-    # Read in all images in source directory
-    imgs = []
-    for file in dirList:
-        imgs.append(cv.imread(os.path.join(srcDir, file)))
-
-    # Output all images with window name matching file name
-    for index, img in enumerate(imgs):
-        cv.imshow(dirList[index], img)
-
-    # Maintain windows until key press
-    cv.waitKey(0)
-
-    # Clean up windows
-    cv.destroyAllWindows()
-
-    detect_edges()
-
-if __name__ == '__main__':
-    main()
-
 def detect_edges():
-    print("CALL_TO: dect_edges\n")
+    print("CALL_TO: detect_edges\n")
+    # TODO: implement
+    return 0
 
 def num_edge_pixels():
     print("CALL_TO: num_edge_pixels\n")
+    # TODO: implement
+    return 0
 
 def avg_edge_strength():
     print("CALL_TO: avg_edge_strength\n")
+    # TODO: implement
+    return 0
 
 def edge_difference():
     """
@@ -85,10 +60,10 @@ def edge_difference():
     """
 
     print("CALL_TO: edge_difference\n")
-    orig_edge_count = 0
-    cb_edge_count = 0
-    orig_avg_edge_strength = 0
-    cb_avg_edge_strength = 0
+    orig_edge_count = num_edge_pixels()
+    cb_edge_count = num_edge_pixels()
+    orig_avg_edge_strength = avg_edge_strength()
+    cb_avg_edge_strength = avg_edge_strength()
 
     # TODO: may want to filter out cases where colorblindness 
     # creates a greater contrast than the original
@@ -105,8 +80,41 @@ def analyze_region():
     """
 
     print("CALL_TO: analyze_region\n")
+    # TODO: determine an appropriate threshold value
     threshold = 0
 
     if edge_difference() > threshold:
         print("Problematic area found")
 
+def main():
+    args = get_args()
+
+    # Absolute path of source directory
+    #srcDir = os.path.join(os.getcwd(), 'source')
+    srcDir = args.source
+    # List of all files and directories in source directory
+    dirList = os.listdir(srcDir)
+
+    # Print all file names in source directory
+    print("Files and directories in '", srcDir, "' :")
+    print(dirList)
+
+    # Read in all images in source directory
+    imgs = []
+    for file in dirList:
+        imgs.append(cv.imread(os.path.join(srcDir, file)))
+
+    print("Type is: ", type(imgs[0]))
+
+    # Output all images with window name matching file name
+    for index, img in enumerate(imgs):
+        cv.imshow(dirList[index], img)
+
+    # Maintain windows until key press
+    cv.waitKey(0)
+
+    # Clean up windows
+    cv.destroyAllWindows()
+
+if __name__ == '__main__':
+    main()
