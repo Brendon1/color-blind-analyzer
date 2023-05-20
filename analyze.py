@@ -3,6 +3,7 @@ import numpy as np
 import os
 import sys
 import argparse
+import transformations
 
 def restrict_float_input(x):
     try:
@@ -103,8 +104,6 @@ def main():
     imgs = []
     for file in dirList:
         imgs.append(cv.imread(os.path.join(srcDir, file)))
-
-    print("Type is: ", type(imgs[0]))
 
     # Output all images with window name matching file name
     for index, img in enumerate(imgs):
