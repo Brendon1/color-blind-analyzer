@@ -1,33 +1,29 @@
 import cv2 as cv
 import numpy as np
 
-_M_RGB2XYZ = np.array([[0.4124564, 0.3575761, 0.1804375],
-                       [0.2126729, 0.7151522, 0.0721750],
-                       [0.0193339, 0.1191920, 0.9503041]])
+#TODO: may want to programatically calculate the rgb to xyz
+# conversion matrix
+_M_RGB2XYZ = np.array([[0.4124564,  0.3575761,  0.1804375],
+                       [0.2126729,  0.7151522,  0.0721750],
+                       [0.0193339,  0.1191920,  0.9503041]])
 
-_M_XYZ2RGB = np.array([[3.2404542,-1.5371385,-0.4985314],
-                       [-0.9692660,1.8760108, 0.0415560],
-                       [0.0556434,-0.2040259, 1.0572252]])
-
-_M_RGB2LMS_HPE = np.array([[0.31399022, 0.63951294, 0.04649755],
-                           [0.15537241, 0.75789446, 0.08670142],
-                           [0.01775239, 0.10944209, 0.87256922]])
-
-_M_LMS2RGB_HPE = np.array([[5.47221205,-4.64196011, 0.16963706],
-                           [-1.12524192,2.29317097,-0.16789520],
-                           [0.02980163,-0.19318070, 1.16364790]])
+_M_BRADFORD = np.array([[0.8951000,  0.2664000, -0.1614000],
+                        [-0.7502000, 1.7135000,  0.0367000],
+                        [0.0389000, -0.0685000,  1.0296000]])
 
 _M_HPE = np.array([[0.4002,  0.7076, -0.0808],
                    [-0.2263, 1.1653,  0.0457],
                    [0.0,     0.0,     0.9182]])
 
-_M_HPE_INV = np.array([[1.86006661,-1.12948008, 0.21989830],
-                       [0.36122292, 0.63880431,-0.00000713],
-                       [0.0,        0.0,        1.08908734]])
-
 _M_CAT16 = np.array([[0.401288, 0.650173, -0.051461],
                      [-0.250268, 1.204414, 0.045854],
                      [-0.002079, 0.048952, 0.953127]])
+
+_M_RGB2LMS = np.matmul(_M_BRADFORD, _M_RGB2XYZ)
+_M_LMS2RGB = np.linalg.inv(_M_RGB2LMS)
+_M_XYZ2RGB = np.linalg.inv(_M_RGB2XYZ)
+_M_BRADFORD_INV = np.linalg.inv(_M_BRADFORD)
+_M_HPE_INV = np.linalg.inv(_M_HPE)
 
 def srgb_to_linear(srgb: np.ndarray):
     """
@@ -99,14 +95,13 @@ def xyz_to_lms(xyz: np.ndarray):
     """
     Convert from XYZ to LMS color space.
 
-    Uses the Hunt-Pointer-Estevez transformation matrix(HPE) to
-    convert from XYZ to the LMS color space. The transformation
-    used can be found at:
+    Uses the Bradford transformation matrix to convert from XYZ 
+    to the LMS color space. The transformation used can be found at:
     https://en.wikipedia.org/wiki/LMS_color_space
-    There is currently no difinitive best tranformation matrix
-    for converting between XYZ and LMS. Other matricies such as
-    CAT16, Bradford, etc. are other alternatives but this implementation
-    uses HPE.
+    There is currently no definitive best transformation matrix
+    for converting between XYZ and LMS. Other matricies such as CAT16, 
+    Hunt-Pointer-Estevez, etc. are other alternatives but this implementation
+    uses Bradford.
     """
 
     lms = cv.transform(xyz, _M_HPE)
@@ -116,14 +111,13 @@ def lms_to_xyz(lms: np.ndarray):
     """
     Convert from LMS to XYZ color space.
 
-    Uses the inverse Hunt-Pointer-Estevez transformation matrix
-    to convert from LMS to the XYZ color space. The original
-    transformation matrix can be found at:
+    Uses the inverse Bradford transformation matrix to convert from LMS 
+    to the XYZ color space. The original transformation matrix can be found at:
     https://en.wikipedia.org/wiki/LMS_color_space
-    There is currently no difinitive best tranformation matrix
-    for converting between XYZ and LMS. Other matricies such as
-    CAT16, Bradford, etc. are other alternatives but this implementation
-    uses HPE.
+    There is currently no definitive best transformation matrix
+    for converting between XYZ and LMS. Other matricies such as CAT16, 
+    Hunt-Pointer-Estevez, etc. are other alternatives but this implementation
+    uses Bradford.
     """
 
     xyz = cv.transform(lms, _M_HPE_INV)
@@ -135,11 +129,11 @@ def srgb_to_lms(srgb: np.ndarray):
 
     Uses a direct mapping to convert from sRGB to LMS by first
     linearizing the source srgb then using the transformation matrix
-    _M_RGB2LMS_HPE = HPE * RGB2XYZ.
+    _M_RGB2LMS.
     """
 
     rgb = srgb_to_linear(srgb)
-    lms = cv.transform(rgb, _M_RGB2LMS_HPE)
+    lms = cv.transform(rgb, _M_RGB2LMS)
     return lms
 
 def lms_to_srgb(lms: np.ndarray):
@@ -147,11 +141,11 @@ def lms_to_srgb(lms: np.ndarray):
     Convert from LMS to sRGB color space.
 
     Uses a direct mapping to convert from LMS to sRGB by first
-    using the transformation matrix _M_LMS2RGB_HPE = inv(_M_RGB2LMS_HPE)
+    using the transformation matrix _M_LMS2RGB = inv(_M_RGB2LMS)
     then restoring the gamma correction to obtain the non-linear
     sRGB representation.
     """
 
-    rgb = cv.transform(lms, _M_LMS2RGB_HPE)
+    rgb = cv.transform(lms, _M_LMS2RGB)
     srgb = linear_to_srgb(rgb)
     return srgb
